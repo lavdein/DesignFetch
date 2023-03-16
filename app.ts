@@ -1,8 +1,19 @@
+// server.ts
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 import { parse, HTMLElement } from "./deps.ts";
 
 const app = new Application();
 const router = new Router();
+
+// Add CORS middleware
+app.use(async (context, next) => {
+  context.response.headers.set("Access-Control-Allow-Origin", "*");
+  context.response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Range"
+  );
+  await next();
+});
 
 const fetchProject = async (url: string) => {
   try {
@@ -54,3 +65,10 @@ app.use(router.allowedMethods());
 
 console.log("Server running on http://localhost:8000");
 await app.listen({ port: 8000 });
+
+// deps.ts
+export {
+    parse,
+    HTMLElement,
+    TextNode,
+  } from "https://deno.land/x/htmlparser2/mod.ts";
