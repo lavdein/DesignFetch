@@ -1,4 +1,3 @@
-// server.ts
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 import { parse, HTMLElement } from "./deps.ts";
 
