@@ -1,76 +1,55 @@
-import { Application, Router, chromium } from "./deps.ts";
+// server.ts
+import { Application, Router } from "https://deno.land/x/oak/mod.ts";
+import { parse, HTMLElement } from "./deps.ts";
 
-const isValidBehanceUrl = (url: string) => {
-  const regex = /^https?:\/\/(www\.)?behance\.net\/gallery\/\d+\/[-\w]+/;
-  return regex.test(url);
-};
-
+const app = new Application();
 const router = new Router();
-router.post("/fetch_project", async (context) => {
-  const body = await context.request.body().value;
-  const projectUrl = body.url;
 
-  if (!projectUrl || !isValidBehanceUrl(projectUrl)) {
-    context.response.status = 400;
-    context.response.body = { error: "Invalid or missing project URL" };
-    return;
-  }
-
+const fetchProject = async (url: string) => {
   try {
-    const browser = await chromium.launch();
-    const context = await browser.newContext();
-    const page = await context.newPage();
+    const response = await fetch(url);
+    const html = await response.text();
 
-    await page.setViewportSize({
-      width: 1280,
-      height: 800,
-      deviceScaleFactor: 2,
-    });
+    const getImageUrls = (html: string) => {
+      const imageUrls: { url: string; width: number; height: number }[] = [];
+      const dom = parse(html);
 
-    await page.goto(projectUrl);
-    await autoScroll(page);
+      const imageContainers = dom.querySelectorAll(".js-grid-image");
+      for (const container of imageContainers) {
+        const img = container.querySelector("img");
+        if (img) {
+          const src = img.getAttribute("src");
+          const width = parseInt(img.getAttribute("data-width") || "0");
+          const height = parseInt(img.getAttribute("data-height") || "0");
+          if (src) {
+            imageUrls.push({ url: src, width, height });
+          }
+        }
+      }
 
-    const imageUrls = await page.$$eval(
-      ".Project-projectModuleContainer-BtF.Preview__project--topMargin.e2e-Project-module-container.project-module-container img",
-      (imgs) =>
-        imgs.map((img) => ({
-          url: img.src,
-          width: img.naturalWidth,
-          height: img.naturalHeight,
-        })),
-    );
+      return imageUrls;
+    };
 
-    await browser.close();
-
-    context.response.status = 200;
-    context.response.body = { imageUrls };
+    const imageUrls = getImageUrls(html);
+    return { imageUrls };
   } catch (error) {
     console.error("Error fetching project:", error);
+    throw new Error("Failed to fetch project");
+  }
+};
+
+router.post("/fetch_project", async (context) => {
+  try {
+    const { url } = await context.request.body().value;
+    const { imageUrls } = await fetchProject(url);
+    context.response.body = { imageUrls };
+  } catch (error) {
+    console.error("Error in fetch_project:", error);
     context.response.status = 500;
-    context.response.body = { error: "Internal server error" };
+    context.response.body = { error: "Failed to fetch project" };
   }
 });
 
-async function autoScroll(page: any) {
-  await page.evaluate(async () => {
-    await new Promise((resolve) => {
-      let totalHeight = 0;
-      const distance = 100;
-      const timer = setInterval(() => {
-        const scrollHeight = document.body.scrollHeight;
-        window.scrollBy(0, distance);
-        totalHeight += distance;
-
-        if (totalHeight >= scrollHeight) {
-          clearInterval(timer);
-          resolve();
-        }
-      }, 100);
-    });
-  });
-}
-
-const app = new Application();
 app.use(router.routes());
 app.use(router.allowedMethods());
 

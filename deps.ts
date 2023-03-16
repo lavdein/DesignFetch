@@ -1,2 +1,7 @@
-export { Application, Router } from "https://deno.land/x/oak/mod.ts";
-export { chromium } from "https://deno.land/x/playwright/mod.ts";
+// deps.ts
+export {
+    parse,
+    HTMLElement,
+    TextNode,
+  } from "https://deno.land/x/htmlparser2/mod.ts";
+  
