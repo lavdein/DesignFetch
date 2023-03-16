@@ -1,4 +1,3 @@
-// server.ts
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 import { parse, HTMLElement } from "./deps.ts";
 
@@ -65,10 +64,3 @@ app.use(router.allowedMethods());
 
 console.log("Server running on http://localhost:8000");
 await app.listen({ port: 8000 });
-
-// deps.ts
-export {
-    parse,
-    HTMLElement,
-    TextNode,
-  } from "https://deno.land/x/htmlparser2/mod.ts";
