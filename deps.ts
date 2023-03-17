@@ -1,4 +1,3 @@
-// deps.ts
 export {
     DOMParser,
     Element,

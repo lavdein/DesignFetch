@@ -24,29 +24,30 @@ const fetchProject = async (url: string) => {
     const html = await response.text();
 
     const getImageUrls = (html: string) => {
-      const imageUrls: { url: string; width: number; height: number }[] = [];
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, "text/html");
-
-      if (!doc) {
-        throw new Error("Failed to parse HTML");
-      }
-
-      const imageContainers = doc.querySelectorAll(".js-grid-image");
-      for (const container of imageContainers) {
-        const img = container.querySelector("img");
-        if (img) {
-          const src = img.getAttribute("src");
-          const width = parseInt(img.getAttribute("data-width") || "0");
-          const height = parseInt(img.getAttribute("data-height") || "0");
-          if (src) {
-            imageUrls.push({ url: src, width, height });
+        const imageUrls: { url: string; width: number; height: number }[] = [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+      
+        if (!doc) {
+          throw new Error("Failed to parse HTML");
+        }
+      
+        const imageContainers = doc.querySelectorAll('.Project-projectModuleContainer-BtF.Preview__project--topMargin.e2e-Project-module-container.project-module-container');
+        for (const container of imageContainers) {
+          const img = container.querySelector("img");
+          if (img) {
+            const src = img.getAttribute("src");
+            const width = parseInt(img.getAttribute("data-width") || "0");
+            const height = parseInt(img.getAttribute("data-height") || "0");
+            if (src) {
+              imageUrls.push({ url: src, width, height });
+            }
           }
         }
-      }
-
-      return imageUrls;
-    };
+      
+        return imageUrls;
+      };
+      
 
     const imageUrls = getImageUrls(html);
     return { imageUrls };
