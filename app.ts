@@ -37,7 +37,7 @@ const fetchProject = async (url: string) => {
     const getImageUrls = async () => {
       return await page.evaluate(() => {
         const imageUrls = [];
-        const imageContainers = document.querySelectorAll('div[data-grid-item]');
+        const imageContainers = document.querySelectorAll('.Project-projectModuleContainer-BtF.Preview__project--topMargin.e2e-Project-module-container.project-module-container img');
         console.log("Image containers found:", imageContainers.length);
         for (const container of imageContainers) {
           const img = container.querySelector("img");
