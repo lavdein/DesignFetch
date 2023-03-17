@@ -1,5 +1,6 @@
+// deps.ts
 export {
-    parse,
-    HTMLElement,
-    TextNode,
-  } from "https://deno.land/x/htmlparser2/htmlparser2/index.ts";
+    DOMParser,
+    Element,
+  } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
+  
