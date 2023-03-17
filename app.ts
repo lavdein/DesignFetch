@@ -1,5 +1,5 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
-import { Parser, Node } from "./deps.ts";
+import { Parser, DomHandler } from "./deps.ts";
 
 const app = new Application();
 const router = new Router();
@@ -29,21 +29,25 @@ const fetchProject = async (url: string) => {
 
     const getImageUrls = (html: string) => {
       const imageUrls: { url: string; width: number; height: number }[] = [];
-      const parser = new Parser(html);
-      const doc = parser.parse();
+      const handler = new DomHandler();
+      const parser = new Parser(handler);
+      parser.write(html);
+      parser.end();
+    
+      const doc = handler.dom;
     
       if (!doc) {
         throw new Error("Failed to parse HTML");
       }
     
-      const imageContainers = doc.querySelectorAll('div[data-grid-item]');
+      const imageContainers = handler.querySelectorAll('div[data-grid-item]', doc);
       console.log("Image containers found:", imageContainers.length);
       for (const container of imageContainers) {
-        const img = container.querySelector("img") as Node;
+        const img = handler.querySelector("img", container);
         if (img) {
-          const src = img.getAttribute("src");
-          const width = parseInt(img.getAttribute("data-width") || "0");
-          const height = parseInt(img.getAttribute("data-height") || "0");
+          const src = handler.getAttributeValue(img, "src");
+          const width = parseInt(handler.getAttributeValue(img, "data-width") || "0");
+          const height = parseInt(handler.getAttributeValue(img, "data-height") || "0");
           if (src) {
             imageUrls.push({ url: src, width, height });
           }
