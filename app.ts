@@ -25,6 +25,25 @@ app.use(async (context, next) => {
   }
 });
 
+const autoScroll = async (page: puppeteer.Page) => {
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve) => {
+      let totalHeight = 0;
+      const distance = 100;
+      const timer = setInterval(() => {
+        const scrollHeight = document.body.scrollHeight;
+        window.scrollBy(0, distance);
+        totalHeight += distance;
+
+        if (totalHeight >= scrollHeight) {
+          clearInterval(timer);
+          resolve();
+        }
+      }, 100);
+    });
+  });
+};
+
 const fetchProject = async (url: string) => {
   try {
     console.log("Fetching URL:", url);
@@ -34,11 +53,13 @@ const fetchProject = async (url: string) => {
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "networkidle2" });
 
+    await autoScroll(page); // Add auto-scrolling function
+
     const getImageUrls = async () => {
       return await page.evaluate(() => {
         // Вывод всего HTML-документа
         console.log("HTML content:", document.documentElement.outerHTML);
-    
+
         const imageUrls = [];
         const imageContainers = document.querySelectorAll('.Project-module-imageContainer img');
         console.log("Image containers found:", imageContainers.length);
@@ -47,11 +68,11 @@ const fetchProject = async (url: string) => {
           const src = img.getAttribute("src");
           const width = parseInt(img.getAttribute("data-width") || "0");
           const height = parseInt(img.getAttribute("data-height") || "0");
-    
+
           console.log("Found image with src:", src);
           console.log("Image width:", width);
           console.log("Image height:", height);
-    
+
           if (src) {
             imageUrls.push({ url: src, width, height });
           }
@@ -59,7 +80,6 @@ const fetchProject = async (url: string) => {
         return imageUrls;
       });
     };
-    
 
     const imageUrls = await getImageUrls();
     console.log("Image URLs found:", imageUrls.length);
