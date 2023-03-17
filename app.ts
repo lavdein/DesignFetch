@@ -87,12 +87,14 @@ const fetchProject = async (url: string) => {
           if (src) {
             imageUrls.push({ url: src, width, height });
           }
-          return imageUrls;
-        }).catch((error) => {
-          console.error("Error executing getImageUrls:", error);
-          throw new Error("Failed to execute getImageUrls");
-        });
+        }
+        return imageUrls; // Переместите return сюда
+      }).catch((error) => {
+        console.error("Error executing getImageUrls:", error);
+        throw new Error("Failed to execute getImageUrls");
+      });
     };
+
 
     const imageUrls = await getImageUrls();
     console.log("Image URLs found:", imageUrls.length);
@@ -123,5 +125,5 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 const port = Number(Deno.env.get("PORT")) || 8000;
-console.log(Server running on http://localhost:${port});
-  await app.listen({ port });
+console.log(`Server running on http://localhost:${port}`);
+await app.listen({ port });
