@@ -1,5 +1,5 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
-import { Parser, HTMLElement } from "./deps.ts";
+import { Parser, HtmlElement } from "./deps.ts";
 
 const app = new Application();
 const router = new Router();
@@ -11,6 +11,8 @@ app.use(async (context, next) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept, Range"
   );
+  context.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  context.response.headers.set("Access-Control-Allow-Credentials", "true");
   if (context.request.method === "OPTIONS") {
     context.response.status = 200;
   } else {
@@ -27,8 +29,8 @@ const fetchProject = async (url: string) => {
 
     const getImageUrls = (html: string) => {
       const imageUrls: { url: string; width: number; height: number }[] = [];
-      const parser = new Parser();
-      const doc = parser.parseFromString(html);
+      const parser = new Parser(html);
+      const doc = parser.parse();
 
       if (!doc) {
         throw new Error("Failed to parse HTML");
@@ -37,7 +39,7 @@ const fetchProject = async (url: string) => {
       const imageContainers = doc.querySelectorAll('div[data-grid-item]');
       console.log("Image containers found:", imageContainers.length);
       for (const container of imageContainers) {
-        const img = container.querySelector("img");
+        const img = container.querySelector("img") as HtmlElement;
         if (img) {
           const src = img.getAttribute("src");
           const width = parseInt(img.getAttribute("data-width") || "0");
