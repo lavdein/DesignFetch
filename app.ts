@@ -1,5 +1,5 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
-import { DOMParser, Element } from "./deps.ts";
+import { parse, Element } from "./deps.ts";
 
 const app = new Application();
 const router = new Router();
@@ -27,14 +27,9 @@ const fetchProject = async (url: string) => {
   
       const getImageUrls = (html: string) => {
         const imageUrls: { url: string; width: number; height: number }[] = [];
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
+        const dom = parse(html);
   
-        if (!doc) {
-          throw new Error("Failed to parse HTML");
-        }
-  
-        const imageContainers = doc.querySelectorAll('div[data-grid-item]');
+        const imageContainers = dom.querySelectorAll('div[data-grid-item]');
         console.log("Image containers found:", imageContainers.length);
         for (const container of imageContainers) {
           const img = container.querySelector("img");
