@@ -4,9 +4,6 @@ import { Parser, Element } from "./deps.ts";
 const app = new Application();
 const router = new Router();
 
-const app = new Application();
-const router = new Router();
-
 // Add CORS middleware
 app.use(async (context, next) => {
   context.response.headers.set("Access-Control-Allow-Origin", "*");
