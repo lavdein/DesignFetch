@@ -11,7 +11,11 @@ app.use(async (context, next) => {
     "Access-Control-Allow-Headers",
     "Origin, X-Requested-With, Content-Type, Accept, Range"
   );
-  await next();
+  if (context.request.method === "OPTIONS") {
+    context.response.status = 200;
+  } else {
+    await next();
+  }
 });
 
 const fetchProject = async (url: string) => {

@@ -2,4 +2,4 @@ export {
     parse,
     HTMLElement,
     TextNode,
-} from "https://deno.land/x/htmlparser@v4.1.1/htmlparser2/index.ts";
+  } from "https://deno.land/x/htmlparser2/htmlparser2/index.ts";
