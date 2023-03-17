@@ -9,17 +9,71 @@ if (!BROWSERLESS_TOKEN) {
 const app = new Application();
 const router = new Router();
 
-router.get("/", async (context) => {
-  const browser = await puppeteer.connect({
-    browserWSEndpoint: `wss://chrome.browserless.io?token=${BROWSERLESS_TOKEN}`,
-  });
+// Add CORS middleware
+app.use(async (context, next) => {
+  context.response.headers.set("Access-Control-Allow-Origin", "*");
+  context.response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Range"
+  );
+  context.response.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  context.response.headers.set("Access-Control-Allow-Credentials", "true");
+  if (context.request.method === "OPTIONS") {
+    context.response.status = 200;
+  } else {
+    await next();
+  }
+});
 
-  const page = await browser.newPage();
-  await page.goto("https://example.com");
-  const pageTitle = await page.title();
-  await browser.close();
+const fetchProject = async (url: string) => {
+  try {
+    console.log("Fetching URL:", url);
+    const browser = await puppeteer.connect({
+      browserWSEndpoint: `wss://chrome.browserless.io?token=${BROWSERLESS_TOKEN}`,
+    });
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: "networkidle2" });
 
-  context.response.body = `Title of the page is: ${pageTitle}`;
+    const getImageUrls = async () => {
+      return await page.evaluate(() => {
+        const imageUrls = [];
+        const imageContainers = document.querySelectorAll('div[data-grid-item]');
+        console.log("Image containers found:", imageContainers.length);
+        for (const container of imageContainers) {
+          const img = container.querySelector("img");
+          if (img) {
+            const src = img.getAttribute("src");
+            const width = parseInt(img.getAttribute("data-width") || "0");
+            const height = parseInt(img.getAttribute("data-height") || "0");
+            if (src) {
+              imageUrls.push({ url: src, width, height });
+            }
+          }
+        }
+        return imageUrls;
+      });
+    };
+
+    const imageUrls = await getImageUrls();
+    console.log("Image URLs found:", imageUrls.length);
+    await browser.close();
+    return { imageUrls };
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    throw new Error("Failed to fetch project");
+  }
+};
+
+router.post("/fetch_project", async (context) => {
+  try {
+    const { url } = await context.request.body().value;
+    const { imageUrls } = await fetchProject(url);
+    context.response.body = { imageUrls };
+  } catch (error) {
+    console.error("Error in fetch_project:", error);
+    context.response.status = 500;
+    context.response.body = { error: "Failed to fetch project" };
+  }
 });
 
 app.use(router.routes());
