@@ -36,25 +36,30 @@ const fetchProject = async (url: string) => {
 
     const getImageUrls = async () => {
       return await page.evaluate(() => {
+        // Вывод всего HTML-документа
+        console.log("HTML content:", document.documentElement.outerHTML);
+    
         const imageUrls = [];
-        const imageContainers = document.querySelectorAll('.Project-projectModuleContainer-BtF.Preview__project--topMargin.e2e-Project-module-container.project-module-container img');
+        const imageContainers = document.querySelectorAll('.Project-module-imageContainer img');
         console.log("Image containers found:", imageContainers.length);
-        for (const container of imageContainers) {
-          console.log("Inspecting container:", container);
-          const img = container.querySelector("img");
-          if (img) {
-            const src = img.getAttribute("src");
-            const width = parseInt(img.getAttribute("data-width") || "0");
-            const height = parseInt(img.getAttribute("data-height") || "0");
-            console.log("Found image with src:", src);
-            if (src) {
-              imageUrls.push({ url: src, width, height });
-            }
+        for (const img of imageContainers) {
+          console.log("Inspecting container:", img);
+          const src = img.getAttribute("src");
+          const width = parseInt(img.getAttribute("data-width") || "0");
+          const height = parseInt(img.getAttribute("data-height") || "0");
+    
+          console.log("Found image with src:", src);
+          console.log("Image width:", width);
+          console.log("Image height:", height);
+    
+          if (src) {
+            imageUrls.push({ url: src, width, height });
           }
         }
         return imageUrls;
       });
     };
+    
 
     const imageUrls = await getImageUrls();
     console.log("Image URLs found:", imageUrls.length);
