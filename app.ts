@@ -1,5 +1,5 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
-import { Parser, Element } from "./deps.ts";
+import { Parser, Node } from "./deps.ts";
 
 const app = new Application();
 const router = new Router();
@@ -39,7 +39,7 @@ const fetchProject = async (url: string) => {
       const imageContainers = doc.querySelectorAll('div[data-grid-item]');
       console.log("Image containers found:", imageContainers.length);
       for (const container of imageContainers) {
-        const img = container.querySelector("img") as Element;
+        const img = container.querySelector("img") as Node;
         if (img) {
           const src = img.getAttribute("src");
           const width = parseInt(img.getAttribute("data-width") || "0");
