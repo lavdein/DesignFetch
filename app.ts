@@ -20,42 +20,46 @@ app.use(async (context, next) => {
 
 const fetchProject = async (url: string) => {
     try {
-        const response = await fetch(url);
-        const html = await response.text();
-
-        const getImageUrls = (html: string) => {
-            const imageUrls: { url: string; width: number; height: number }[] = [];
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, "text/html");
-
-            if (!doc) {
-                throw new Error("Failed to parse HTML");
+      console.log("Fetching URL:", url);
+      const response = await fetch(url);
+      const html = await response.text();
+      console.log("HTML fetched:", html.slice(0, 100));
+  
+      const getImageUrls = (html: string) => {
+        const imageUrls: { url: string; width: number; height: number }[] = [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+  
+        if (!doc) {
+          throw new Error("Failed to parse HTML");
+        }
+  
+        const imageContainers = doc.querySelectorAll('div[data-grid-item]');
+        console.log("Image containers found:", imageContainers.length);
+        for (const container of imageContainers) {
+          const img = container.querySelector("img");
+          if (img) {
+            const src = img.getAttribute("src");
+            const width = parseInt(img.getAttribute("data-width") || "0");
+            const height = parseInt(img.getAttribute("data-height") || "0");
+            if (src) {
+              imageUrls.push({ url: src, width, height });
             }
-
-            const imageContainers = doc.querySelectorAll('.Project-projectModuleContainer-BtF.Preview__project--topMargin.e2e-Project-module-container.project-module-container');
-            for (const container of imageContainers) {
-                const img = container.querySelector("img");
-                if (img) {
-                    const src = img.getAttribute("src");
-                    const width = parseInt(img.getAttribute("data-width") || "0");
-                    const height = parseInt(img.getAttribute("data-height") || "0");
-                    if (src) {
-                        imageUrls.push({ url: src, width, height });
-                    }
-                }
-            }
-
-            return imageUrls;
-        };
-
-
-        const imageUrls = getImageUrls(html);
-        return { imageUrls };
+          }
+        }
+  
+        return imageUrls;
+      };
+  
+      const imageUrls = getImageUrls(html);
+      console.log("Image URLs found:", imageUrls.length);
+      return { imageUrls };
     } catch (error) {
-        console.error("Error fetching project:", error);
-        throw new Error("Failed to fetch project");
+      console.error("Error fetching project:", error);
+      throw new Error("Failed to fetch project");
     }
-};
+  };
+  
 
 router.post("/fetch_project", async (context) => {
     try {
