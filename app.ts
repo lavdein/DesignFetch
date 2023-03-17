@@ -44,21 +44,27 @@ const autoScroll = async (page: puppeteer.Page) => {
   });
 };
 
-const sleep = (ms: number) => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
-
 const fetchProject = async (url: string) => {
   try {
     console.log("Fetching URL:", url);
     const browser = await puppeteer.connect({
       browserWSEndpoint: `wss://chrome.browserless.io?token=${BROWSERLESS_TOKEN}`,
+    }).catch((error) => {
+      console.error("Error connecting to browserless:", error);
+      throw new Error("Failed to connect to browserless");
     });
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: "networkidle2" });
+
+    const page = await browser.newPage().catch((error) => {
+      console.error("Error opening a new page:", error);
+      throw new Error("Failed to open a new page");
+    });
+
+    await page.goto(url, { waitUntil: "networkidle2" }).catch((error) => {
+      console.error("Error navigating to the URL:", error);
+      throw new Error("Failed to navigate to the URL");
+    });
 
     await autoScroll(page); // Add auto-scrolling function
-    await sleep(3000); // Wait for 3 seconds to let images load
 
     const getImageUrls = async () => {
       return await page.evaluate(() => {
@@ -81,14 +87,19 @@ const fetchProject = async (url: string) => {
           if (src) {
             imageUrls.push({ url: src, width, height });
           }
-        }
-        return imageUrls;
-      });
+          return imageUrls;
+        }).catch((error) => {
+          console.error("Error executing getImageUrls:", error);
+          throw new Error("Failed to execute getImageUrls");
+        });
     };
 
     const imageUrls = await getImageUrls();
     console.log("Image URLs found:", imageUrls.length);
-    await browser.close();
+    await browser.close().catch((error) => {
+      console.error("Error closing browser:", error);
+      throw new Error("Failed to close browser");
+    });
     return { imageUrls };
   } catch (error) {
     console.error("Error fetching project:", error);
@@ -112,5 +123,5 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 const port = Number(Deno.env.get("PORT")) || 8000;
-console.log(`Server running on http://localhost:${port}`);
-await app.listen({ port });
+console.log(Server running on http://localhost:${port});
+  await app.listen({ port });
