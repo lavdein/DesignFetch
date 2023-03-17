@@ -44,6 +44,10 @@ const autoScroll = async (page: puppeteer.Page) => {
   });
 };
 
+const sleep = (ms: number) => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
+
 const fetchProject = async (url: string) => {
   try {
     console.log("Fetching URL:", url);
@@ -54,6 +58,7 @@ const fetchProject = async (url: string) => {
     await page.goto(url, { waitUntil: "networkidle2" });
 
     await autoScroll(page); // Add auto-scrolling function
+    await sleep(3000); // Wait for 3 seconds to let images load
 
     const getImageUrls = async () => {
       return await page.evaluate(() => {
