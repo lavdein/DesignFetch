@@ -1,5 +1,6 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 import { Parser, DomHandler, DomUtils } from "./deps.ts";
+import puppeteer from "https://deno.land/x/puppeteer@16.2.0/mod.ts";
 
 const app = new Application();
 const router = new Router();
@@ -23,47 +24,33 @@ app.use(async (context, next) => {
 const fetchProject = async (url: string) => {
   try {
     console.log("Fetching URL:", url);
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36",
-      },
-    });
-    const html = await response.text();
-    console.log("HTML fetched:", html.slice(0, 100));
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: "networkidle2" });
 
-    const getImageUrls = (html: string) => {
-      const imageUrls: { url: string; width: number; height: number }[] = [];
-      const handler = new DomHandler();
-      const parser = new Parser(handler);
-      parser.write(html);
-      parser.end();
-    
-      const doc = handler.dom;
-    
-      if (!doc) {
-        throw new Error("Failed to parse HTML");
-      }
-    
-      const imageContainers = DomUtils.findAll((elem) => DomUtils.hasAttrib(elem, "data-grid-item"), doc);
-      console.log("Image containers found:", imageContainers.length);
-      for (const container of imageContainers) {
-        const img = DomUtils.findOne((elem) => elem.name === "img", container);
-        if (img) {
-          const src = DomUtils.getAttributeValue(img, "src");
-          const width = parseInt(DomUtils.getAttributeValue(img, "data-width") || "0");
-          const height = parseInt(DomUtils.getAttributeValue(img, "data-height") || "0");
-          if (src) {
-            imageUrls.push({ url: src, width, height });
+    const getImageUrls = async () => {
+      return await page.evaluate(() => {
+        const imageUrls = [];
+        const imageContainers = document.querySelectorAll('div[data-grid-item]');
+        console.log("Image containers found:", imageContainers.length);
+        for (const container of imageContainers) {
+          const img = container.querySelector("img");
+          if (img) {
+            const src = img.getAttribute("src");
+            const width = parseInt(img.getAttribute("data-width") || "0");
+            const height = parseInt(img.getAttribute("data-height") || "0");
+            if (src) {
+              imageUrls.push({ url: src, width, height });
+            }
           }
         }
-      }
-    
-      return imageUrls;
+        return imageUrls;
+      });
     };
 
-    const imageUrls = getImageUrls(html);
+    const imageUrls = await getImageUrls();
     console.log("Image URLs found:", imageUrls.length);
+    await browser.close();
     return { imageUrls };
   } catch (error) {
     console.error("Error fetching project:", error);
