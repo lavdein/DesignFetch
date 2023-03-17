@@ -1,5 +1,5 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
-import { parse, Element } from "./deps.ts";
+import { parse } from "https://deno.land/x/html_parser@v0.1.3/src/mod.ts";
 
 const app = new Application();
 const router = new Router();
@@ -20,41 +20,41 @@ app.use(async (context, next) => {
 
 const fetchProject = async (url: string) => {
     try {
-      console.log("Fetching URL:", url);
-      const response = await fetch(url);
-      const html = await response.text();
-      console.log("HTML fetched:", html.slice(0, 100));
-  
-      const getImageUrls = (html: string) => {
-        const imageUrls: { url: string; width: number; height: number }[] = [];
-        const dom = parse(html);
-  
-        const imageContainers = dom.querySelectorAll('div[data-grid-item]');
-        console.log("Image containers found:", imageContainers.length);
-        for (const container of imageContainers) {
-          const img = container.querySelector("img");
-          if (img) {
-            const src = img.getAttribute("src");
-            const width = parseInt(img.getAttribute("data-width") || "0");
-            const height = parseInt(img.getAttribute("data-height") || "0");
-            if (src) {
-              imageUrls.push({ url: src, width, height });
+        console.log("Fetching URL:", url);
+        const response = await fetch(url);
+        const html = await response.text();
+        console.log("HTML fetched:", html.slice(0, 100));
+
+        const getImageUrls = (html: string) => {
+            const imageUrls: { url: string; width: number; height: number }[] = [];
+            const dom = parse(html);
+
+            const imageContainers = dom.querySelectorAll('div[data-grid-item]');
+            console.log("Image containers found:", imageContainers.length);
+            for (const container of imageContainers) {
+                const img = container.querySelector("img");
+                if (img) {
+                    const src = img.getAttribute("src");
+                    const width = parseInt(img.getAttribute("data-width") || "0");
+                    const height = parseInt(img.getAttribute("data-height") || "0");
+                    if (src) {
+                        imageUrls.push({ url: src, width, height });
+                    }
+                }
             }
-          }
-        }
-  
-        return imageUrls;
-      };
-  
-      const imageUrls = getImageUrls(html);
-      console.log("Image URLs found:", imageUrls.length);
-      return { imageUrls };
+
+            return imageUrls;
+        };
+
+        const imageUrls = getImageUrls(html);
+        console.log("Image URLs found:", imageUrls.length);
+        return { imageUrls };
     } catch (error) {
-      console.error("Error fetching project:", error);
-      throw new Error("Failed to fetch project");
+        console.error("Error fetching project:", error);
+        throw new Error("Failed to fetch project");
     }
-  };
-  
+};
+
 
 router.post("/fetch_project", async (context) => {
     try {
